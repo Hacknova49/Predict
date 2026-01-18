@@ -2,6 +2,31 @@
 
 A machine learning-based predictive maintenance system for aircraft engines using LSTM neural networks. This project predicts Remaining Useful Life (RUL) of turbofan engines based on sensor data from the NASA C-MAPSS dataset.
 
+## 📊 Performance Summary
+
+```text
+===== GLOBAL PERFORMANCE =====
+FD001 RMSE      : 14.656
+FD001 MAE       : 10.587
+Correlation (R) : 0.940
+R² Score        : 0.866
+
+===== ZONE-WISE RMSE =====
+Late life (<=30) : 6.788
+Mid life (30-80) : 19.200
+Early life (>80) : 15.347
+
+===== BIAS CHECK =====
+Over-prediction % : 64.0
+Under-prediction %: 36.0
+
+===== SAMPLE ENGINE CHECK =====
+Engine ID        : 5
+Predicted RUL    : 92.6
+True RUL         : 91.0
+Absolute Error   : 1.6
+```
+
 ## 🎯 Overview
 
 This system uses deep learning to predict when aircraft engines will fail, enabling proactive maintenance scheduling. It features:
@@ -228,10 +253,20 @@ Sequential([
 
 ## 📊 Performance Metrics
 
-- **RMSE**: 14.8 cycles
-- **Mean Error**: 0.52 cycles
-- **MAE**: 11.0 cycles
-- **Max Error**: 44.2 cycles
+Detailed evaluation of the model performance on the FD001 test set:
+
+| Metric | Value |
+|--------|-------|
+| **RMSE** | 14.656 cycles |
+| **MAE** | 10.587 cycles |
+| **Correlation (R)** | 0.940 |
+| **R² Score** | 0.866 |
+| **Max Error** | 44.2 cycles |
+
+### Zone-wise Performance (RMSE)
+* **Late Life (<=30 cycles):** 6.788
+* **Mid Life (30-80 cycles):** 19.200
+* **Early Life (>80 cycles):** 15.347
 
 ## 🛠️ Development
 
