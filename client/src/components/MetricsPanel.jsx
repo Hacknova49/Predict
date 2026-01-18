@@ -1,74 +1,123 @@
 import React from 'react';
-import { Timer, RefreshCw } from 'lucide-react';
-import HealthStatus from './HealthStatus';
+import { Timer, Activity, ShieldCheck, Zap } from 'lucide-react';
 import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale } from 'chart.js';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Register all necessary elements to prevent Chart.js from crashing
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
 
 const MetricsPanel = ({ rul, health, cycle }) => {
-    // RUL Fix: Ensure we display '--' if rul is null/undefined
+    const safeRul = (rul !== null && rul !== undefined && !isNaN(rul)) ? Number(rul) : 0;
     const displayRul = (rul !== null && rul !== undefined) ? Math.round(rul) : '--';
     const displayHealth = (health !== null && health !== undefined) ? Math.round(health) : '--';
-    const numericHealth = (health !== null && health !== undefined) ? health : 100;
+    const numericHealth = (health !== null && health !== undefined && !isNaN(health)) ? Number(health) : 0;
+    const displayCycle = (cycle !== null && cycle !== undefined) ? cycle : 0;
 
-    // Gauge Data
+    const getHealthColor = (score) => {
+        if (score > 70) return 'var(--success)';
+        if (score > 40) return 'var(--warning)';
+        return 'var(--danger)';
+    };
+
+    const healthColor = getHealthColor(numericHealth);
+
     const gaugeData = {
-        labels: ['Health', 'Lost'],
         datasets: [{
-            data: [numericHealth, 100 - numericHealth],
-            backgroundColor: [
-                numericHealth > 70 ? '#10b981' : numericHealth > 40 ? '#f59e0b' : '#ef4444',
-                'rgba(255,255,255,0.05)'
-            ],
+            data: [numericHealth, Math.max(0, 100 - numericHealth)],
+            backgroundColor: [healthColor, 'rgba(255,255,255,0.03)'],
             borderWidth: 0,
-            circumference: 180,
-            rotation: 270,
+            circumference: 220,
+            rotation: 250,
+            cutout: '85%',
+            borderRadius: 10
         }]
     };
 
-    const gaugeOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '80%',
-        plugins: { tooltip: { enabled: false }, legend: { display: false } }
-    };
+    // Calculate progress width safely
+    const progressWidth = Math.min(100, Math.max(0, (Number(safeRul) / 200) * 100));
 
     return (
-        <div className="metrics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+        <div className="dashboard-grid animate-entrance">
             {/* RUL Card */}
-            <div className="metric-card glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className="metric-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-muted)' }}>
-                    <Timer size={20} />
-                    <h2 className="text-sm font-bold uppercase">RUL Prediction</h2>
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem', color: 'var(--text-dim)' }}>
+                    <div style={{ padding: '8px', background: 'rgba(59,130,246,0.1)', borderRadius: '8px', display: 'flex' }}>
+                        <Timer size={20} color="var(--primary)" />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>REMAINING USEFUL LIFE</span>
                 </div>
-                <div className="metric-value" style={{ fontSize: '48px', fontWeight: '700', background: 'linear-gradient(to right, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                    {displayRul} <span className="measure" style={{ fontSize: '16px', fontWeight: '400', WebkitTextFillColor: 'var(--text-muted)' }}>cycles</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                    <span className="metric-value" style={{
+                        background: 'linear-gradient(to bottom, #fff, var(--text-dim))',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent'
+                    }}>{displayRul}</span>
+                    <span style={{ fontSize: '1rem', color: 'var(--text-muted)', fontWeight: 500 }}>cycles</span>
                 </div>
-                <p className="metric-sub text-xs text-muted">Remaining Useful Life</p>
+                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                    <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px' }}>
+                        <div style={{
+                            width: `${progressWidth}%`,
+                            height: '100%',
+                            background: 'var(--primary)',
+                            borderRadius: '2px',
+                            boxShadow: '0 0 10px var(--primary-glow)',
+                            transition: 'width 0.5s ease-in-out'
+                        }} />
+                    </div>
+                </div>
             </div>
 
-            {/* Health Score */}
-            <div className="metric-card glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className="metric-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-muted)' }}>
-                    <HealthStatus score={numericHealth} />
+            {/* Health Score Card */}
+            <div className="glass-card" style={{ position: 'relative', overflow: 'hidden', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem', color: 'var(--text-dim)' }}>
+                    <div style={{
+                        padding: '8px',
+                        background: `color-mix(in srgb, ${healthColor}, transparent 85%)`,
+                        borderRadius: '8px',
+                        display: 'flex'
+                    }}>
+                        <Activity size={20} color={healthColor} />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>SYSTEM HEALTH SCORE</span>
                 </div>
-                <div style={{ position: 'relative', width: '100%', height: '100px', display: 'flex', justifyContent: 'center' }}>
-                    <Doughnut data={gaugeData} options={gaugeOptions} />
-                    <div style={{ position: 'absolute', bottom: '0', fontSize: '24px', fontWeight: '700' }}>{displayHealth}%</div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', marginTop: '-10px' }}>
+                    <div style={{ width: '160px', height: '160px', position: 'absolute' }}>
+                        <Doughnut
+                            data={gaugeData}
+                            options={{
+                                plugins: { tooltip: { enabled: false }, legend: { display: false } },
+                                maintainAspectRatio: false,
+                                animation: { duration: 500 }
+                            }}
+                        />
+                    </div>
+                    <div style={{ textAlign: 'center', zIndex: 1 }}>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 800, color: healthColor }}>
+                            {displayHealth}<span style={{ fontSize: '1.25rem' }}>%</span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>NOMINAL</div>
+                    </div>
                 </div>
             </div>
 
-            {/* Cycle Counter */}
-            <div className="metric-card glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div className="metric-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-muted)' }}>
-                    <RefreshCw size={20} />
-                    <h2 className="text-sm font-bold uppercase">Observed Cycle (Total Cycles Obs)</h2>
+            {/* Current Cycle Card */}
+            <div className="glass-card" style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.5rem', color: 'var(--text-dim)' }}>
+                    <div style={{ padding: '8px', background: 'rgba(168,85,247,0.1)', borderRadius: '8px', display: 'flex' }}>
+                        <Zap size={20} color="var(--accent)" />
+                    </div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>OPERATIONAL CYCLES</span>
                 </div>
-                <div className="metric-value" style={{ fontSize: '48px', fontWeight: '700', color: 'white' }}>
-                    {cycle}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                    <span className="metric-value">{displayCycle < 1000 ? String(displayCycle).padStart(3, '0') : displayCycle}</span>
+                    <ShieldCheck size={20} color="var(--success)" style={{ filter: 'drop-shadow(0 0 5px var(--success))' }} />
                 </div>
-                <p className="metric-sub text-xs text-muted">Operational Cycles</p>
+                <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="pulse" style={{ background: 'var(--success)', width: '6px', height: '6px' }}></div>
+                    LIVE DATA STREAM
+                </div>
             </div>
         </div>
     );

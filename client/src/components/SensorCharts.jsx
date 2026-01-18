@@ -30,68 +30,113 @@ ChartJS.defaults.borderColor = 'rgba(255,255,255,0.05)';
 const commonOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    elements: { point: { radius: 0 } },
-    animation: false,
-    interaction: { mode: 'index', intersect: false },
-    scales: { x: { display: false } } // Hide X axis labels for cleaner look? Or keep them. Let's hide to match minimal look, or show sparse.
+    elements: {
+        point: { radius: 0, hoverRadius: 6, backgroundColor: '#fff', borderWidth: 2 },
+        line: { tension: 0.4, borderWidth: 3 }
+    },
+    animation: {
+        duration: 800,
+        easing: 'easeOutQuart'
+    },
+    plugins: {
+        legend: {
+            display: true,
+            position: 'top',
+            align: 'end',
+            labels: {
+                usePointStyle: true,
+                padding: 20,
+                color: '#64748b',
+                font: { family: "'Outfit', sans-serif", size: 11, weight: 600 }
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#0f172a',
+            bodyColor: '#334155',
+            titleFont: { family: "'Outfit', sans-serif", size: 14 },
+            bodyFont: { family: "'Inter', sans-serif", size: 12 },
+            padding: 12,
+            borderColor: 'rgba(0,0,0,0.1)',
+            borderWidth: 1,
+            displayColors: true,
+            boxPadding: 4
+        }
+    },
+    scales: {
+        x: {
+            grid: { display: false },
+            ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+        },
+        y: {
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { color: '#94a3b8', font: { family: "'JetBrains Mono', monospace", size: 10 } }
+        }
+    }
 };
 
 const SensorCharts = ({ healthHistory, sensorHistory }) => {
-
-    // Health Data
+    // Health Data with Gradient
     const healthData = {
         labels: healthHistory.map(h => h.cycle),
         datasets: [{
-            label: 'Health %',
+            label: 'System Health Stability',
             data: healthHistory.map(h => h.value),
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderColor: 'hsl(150, 84%, 45%)',
+            backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+                gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                return gradient;
+            },
             fill: true,
-            tension: 0.4
         }]
     };
 
-    // Sensor 1 (Vibrations: 2, 3, 4)
-    // Map from history list. 
-    // History item: { cycle: 1, s2: ..., s3: ..., s4: ..., s7: ..., s12: ..., s15: ... }
     const sensor1Data = {
         labels: sensorHistory.map(d => d.cycle),
         datasets: [
-            { label: 'Sensor 2', data: sensorHistory.map(d => d.s2), borderColor: '#3b82f6', tension: 0.3 },
-            { label: 'Sensor 3', data: sensorHistory.map(d => d.s3), borderColor: '#8b5cf6', tension: 0.3 },
-            { label: 'Sensor 4', data: sensorHistory.map(d => d.s4), borderColor: '#ec4899', tension: 0.3 },
+            { label: 'S2 Thermal', data: sensorHistory.map(d => d.s2), borderColor: 'hsl(217, 91%, 60%)' },
+            { label: 'S3 Vib', data: sensorHistory.map(d => d.s3), borderColor: 'hsl(262, 80%, 65%)' },
+            { label: 'S4 Flow', data: sensorHistory.map(d => d.s4), borderColor: 'hsl(320, 80%, 60%)' },
         ]
     };
 
-    // Sensor 2 (Pressure: 7, 12, 15)
     const sensor2Data = {
         labels: sensorHistory.map(d => d.cycle),
         datasets: [
-            { label: 'Sensor 7', data: sensorHistory.map(d => d.s7), borderColor: '#f59e0b', tension: 0.3 },
-            { label: 'Sensor 12', data: sensorHistory.map(d => d.s12), borderColor: '#ef4444', tension: 0.3 },
-            { label: 'Sensor 15', data: sensorHistory.map(d => d.s15), borderColor: '#06b6d4', tension: 0.3 },
+            { label: 'S7 Pressure', data: sensorHistory.map(d => d.s7), borderColor: 'hsl(45, 93%, 50%)' },
+            { label: 'S12 Speed', data: sensorHistory.map(d => d.s12), borderColor: 'hsl(0, 84%, 60%)' },
+            { label: 'S15 Bypass', data: sensorHistory.map(d => d.s15), borderColor: 'hsl(180, 70%, 50%)' },
         ]
     };
 
     return (
-        <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
-            <div className="chart-card glass-panel" style={{ padding: '20px', gridColumn: 'span 2' }}>
-                <h3 className="text-sm font-bold text-muted mb-4 uppercase">Health Degradation Over Time</h3>
-                <div style={{ height: '250px' }}>
-                    <Line data={healthData} options={{ ...commonOptions, scales: { y: { min: 0, max: 100 } } }} />
+        <div className="charts-grid animate-entrance" style={{ marginTop: '2rem' }}>
+            <div className="glass-card p-4" style={{ gridColumn: 'span 2', padding: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.05em' }}>HEALTH DEGRADATION TRAJECTORY</h3>
+                    <div className="status-pill status-live">
+                        <div className="pulse" style={{ background: 'var(--success)' }}></div>
+                        ANALYZING TRENDS
+                    </div>
+                </div>
+                <div style={{ height: '300px' }}>
+                    <Line data={healthData} options={{ ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, min: 0, max: 100 } } }} />
                 </div>
             </div>
 
-            <div className="chart-card glass-panel" style={{ padding: '20px' }}>
-                <h3 className="text-sm font-bold text-muted mb-4 uppercase">Vibration Sensors (2, 3, 4)</h3>
-                <div style={{ height: '200px' }}>
+            <div className="glass-card p-4" style={{ padding: '2rem' }}>
+                <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.05em', marginBottom: '1.5rem' }}>INTERNAL VIBRATION ANALYSIS</h3>
+                <div style={{ height: '220px' }}>
                     <Line data={sensor1Data} options={commonOptions} />
                 </div>
             </div>
 
-            <div className="chart-card glass-panel" style={{ padding: '20px' }}>
-                <h3 className="text-sm font-bold text-muted mb-4 uppercase">Pressure Sensors (7, 12, 15)</h3>
-                <div style={{ height: '200px' }}>
+            <div className="glass-card p-4" style={{ padding: '2rem' }}>
+                <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '0.05em', marginBottom: '1.5rem' }}>PRESSURE & FLOW DYNAMICS</h3>
+                <div style={{ height: '220px' }}>
                     <Line data={sensor2Data} options={commonOptions} />
                 </div>
             </div>

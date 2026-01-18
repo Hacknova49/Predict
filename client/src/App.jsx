@@ -141,7 +141,7 @@ function App() {
         status={statusMsg}
       />
 
-      <main className="main-content" style={{ marginLeft: '320px', padding: '20px', minHeight: '100vh', overflowY: 'auto' }}>
+      <main className="main-content">
         <MetricsPanel
           rul={rul}
           health={health}
